@@ -2,13 +2,10 @@
    CONFIGURACIÓN
    Pega aquí la URL de tu Web App de Apps Script (termina en /exec)
    ============================================================ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzINvP8rM81wYKz0C8894rnXW62Q0IPXIcwWyey-37ZrVmOptl5yTj-Vj4a3BAAvR6k3A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyKdKI-6Rj5jIFuOqpKBp8ZTiQ8Pt-zQfuDDSwlIja7LZ1N3tZ3cLEegIPtrqjeEHQvPg/exec';
 
 /* ============================================================
    HELPERS DE LLAMADAS A LA API
-   - GET para lecturas
-   - POST con Content-Type text/plain para evitar el preflight
-     CORS que Apps Script no puede responder correctamente
    ============================================================ */
 async function apiGet(action, params = {}) {
   const url = new URL(API_URL);
@@ -32,8 +29,10 @@ async function apiPost(action, payload = {}) {
    ============================================================ */
 let listaActualId = localStorage.getItem('listaActualId') || null;
 let itemsActuales = [];
+let tipoSeleccionado = 'SALIDA';
 let chartEstado = null;
 let chartItems = null;
+let chartMovimientos = null;
 
 /* ============================================================
    TABS
@@ -49,7 +48,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 /* ============================================================
-   INICIO: cargar responsables y revisar si hay lista en curso
+   TOGGLE TIPO (Entrada / Salida)
+   ============================================================ */
+document.querySelectorAll('.tipo-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    tipoSeleccionado = btn.dataset.tipo;
+  });
+});
+
+/* ============================================================
+   INICIO
    ============================================================ */
 async function init() {
   const resp = await apiGet('responsables');
@@ -79,10 +89,11 @@ init();
    ============================================================ */
 document.getElementById('btn-crear-lista').addEventListener('click', async () => {
   const responsable = document.getElementById('select-responsable').value;
+  const numeroDocumento = document.getElementById('input-documento').value.trim();
   const btn = document.getElementById('btn-crear-lista');
   btn.disabled = true;
 
-  const resp = await apiPost('crearLista', { responsable });
+  const resp = await apiPost('crearLista', { responsable, numeroDocumento });
   btn.disabled = false;
 
   if (!resp.success) { alert(resp.message || 'No se pudo crear la lista'); return; }
@@ -97,55 +108,91 @@ function mostrarPanelConLista(lista, items) {
   document.getElementById('panel-con-lista').classList.remove('hidden');
   document.getElementById('lista-responsable-actual').textContent = lista.responsable;
   document.getElementById('lista-fecha-actual').textContent =
-    'Iniciada: ' + formatearFecha(lista.fechaCreacion);
+    'Iniciada: ' + formatearFecha(lista.fechaCreacion) +
+    (lista.numeroDocumento ? ' · Doc: ' + lista.numeroDocumento : '');
   itemsActuales = items || [];
   renderItems();
   document.getElementById('input-sku').focus();
 }
 
 /* ============================================================
-   AGREGAR SKU
+   VISTA PREVIA AL ESCANEAR SKU (antes de agregar)
    ============================================================ */
 const inputSku = document.getElementById('input-sku');
-const feedback = document.getElementById('scan-feedback');
+const inputCantidad = document.getElementById('input-cantidad');
+const previewFeedback = document.getElementById('preview-feedback');
+const scanFeedback = document.getElementById('scan-feedback');
 
-document.getElementById('btn-agregar-sku').addEventListener('click', agregarSku);
-inputSku.addEventListener('keydown', e => { if (e.key === 'Enter') agregarSku(); });
-
-async function agregarSku() {
+inputSku.addEventListener('keydown', async e => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
   const sku = inputSku.value.trim();
   if (!sku) return;
 
-  feedback.textContent = 'Buscando...';
-  feedback.className = 'feedback';
+  previewFeedback.textContent = 'Buscando...';
+  previewFeedback.className = 'feedback';
 
-  const resp = await apiPost('agregarItem', { listaId: listaActualId, sku });
+  const resp = await apiGet('buscarSku', { sku });
+  if (!resp.success) {
+    previewFeedback.textContent = resp.message || 'SKU no encontrado';
+    previewFeedback.className = 'feedback error';
+    inputSku.select();
+    return;
+  }
+
+  previewFeedback.textContent = '✓ ' + resp.descripcion + ' (stock ref: ' + resp.stock + ')';
+  previewFeedback.className = 'feedback ok';
+  inputCantidad.focus();
+  inputCantidad.select();
+});
+
+inputCantidad.addEventListener('keydown', e => { if (e.key === 'Enter') agregarSku(); });
+document.getElementById('btn-agregar-sku').addEventListener('click', agregarSku);
+
+async function agregarSku() {
+  const sku = inputSku.value.trim();
+  const cantidad = Number(inputCantidad.value);
+
+  if (!sku) { inputSku.focus(); return; }
+  if (!cantidad || cantidad <= 0) { inputCantidad.focus(); inputCantidad.select(); return; }
+
+  scanFeedback.textContent = 'Guardando...';
+  scanFeedback.className = 'feedback';
+
+  const resp = await apiPost('agregarItem', {
+    listaId: listaActualId, sku, tipo: tipoSeleccionado, cantidad
+  });
 
   if (!resp.success) {
-    feedback.textContent = resp.message || 'SKU no encontrado';
-    feedback.className = 'feedback error';
-    inputSku.select();
+    scanFeedback.textContent = resp.message || 'No se pudo agregar';
+    scanFeedback.className = 'feedback error';
     return;
   }
 
   itemsActuales.push(resp.item);
   renderItems();
-  feedback.textContent = '✓ ' + resp.item.descripcion;
-  feedback.className = 'feedback ok';
+  scanFeedback.textContent = '✓ Registrado en Movimientos: ' + resp.item.descripcion;
+  scanFeedback.className = 'feedback ok';
+
   inputSku.value = '';
+  inputCantidad.value = '1';
+  previewFeedback.textContent = '';
   inputSku.focus();
 }
 
 function renderItems() {
   const body = document.getElementById('items-body');
   body.innerHTML = '';
-  itemsActuales.forEach(item => {
+  itemsActuales.forEach((item, idx) => {
     const tr = document.createElement('tr');
+    const tipoClass = item.tipo === 'ENTRADA' ? 'entrada' : 'salida';
     tr.innerHTML = `
       <td>${item.sku}</td>
       <td>${item.descripcion}</td>
+      <td><span class="tipo-pill ${tipoClass}">${item.tipo}</span></td>
+      <td>${item.cantidad}</td>
       <td>${item.stock}</td>
-      <td><button class="row-delete" data-sku="${item.sku}">Quitar</button></td>
+      <td><button class="row-delete" data-idx="${idx}">Quitar</button></td>
     `;
     body.appendChild(tr);
   });
@@ -153,14 +200,15 @@ function renderItems() {
     itemsActuales.length + (itemsActuales.length === 1 ? ' producto' : ' productos');
 
   body.querySelectorAll('.row-delete').forEach(b => {
-    b.addEventListener('click', () => eliminarItem(b.dataset.sku));
+    b.addEventListener('click', () => eliminarItem(Number(b.dataset.idx)));
   });
 }
 
-async function eliminarItem(sku) {
-  const resp = await apiPost('eliminarItem', { listaId: listaActualId, sku });
+async function eliminarItem(itemIndex) {
+  if (!confirm('¿Quitar este producto de la lista? (el movimiento ya escrito en tu hoja Movimientos no se borra automáticamente)')) return;
+  const resp = await apiPost('eliminarItem', { listaId: listaActualId, itemIndex });
   if (resp.success) {
-    itemsActuales = itemsActuales.filter(i => i.sku !== sku);
+    itemsActuales.splice(itemIndex, 1);
     renderItems();
   }
 }
@@ -180,7 +228,9 @@ document.getElementById('btn-cerrar-lista').addEventListener('click', async () =
 
   document.getElementById('panel-con-lista').classList.add('hidden');
   document.getElementById('panel-sin-lista').classList.remove('hidden');
-  document.getElementById('scan-feedback').textContent = '';
+  document.getElementById('input-documento').value = '';
+  scanFeedback.textContent = '';
+  previewFeedback.textContent = '';
 });
 
 /* ============================================================
@@ -203,6 +253,9 @@ async function cargarDashboard() {
   renderTablaCerradas(cerradas);
   renderChartEstado(pendientes.length, cerradas.length);
   renderChartItems([...pendientes, ...cerradas]);
+
+  const resumen = await apiGet('resumenMovimientos');
+  if (resumen.success) renderChartMovimientos(resumen.totalEntrada, resumen.totalSalida);
 }
 
 function renderTablaPendientes(pendientes) {
@@ -265,13 +318,15 @@ async function verDetalle(id) {
 
   document.getElementById('modal-titulo').textContent = 'Lista de ' + detalle.lista.responsable;
   document.getElementById('modal-subtitulo').textContent =
-    formatearFecha(detalle.lista.fechaCreacion) + ' → ' + formatearFecha(detalle.lista.fechaCierre);
+    formatearFecha(detalle.lista.fechaCreacion) + ' → ' + formatearFecha(detalle.lista.fechaCierre) +
+    (detalle.lista.numeroDocumento ? ' · Doc: ' + detalle.lista.numeroDocumento : '');
 
   const body = document.getElementById('modal-items-body');
   body.innerHTML = '';
   detalle.items.forEach(item => {
+    const tipoClass = item.tipo === 'ENTRADA' ? 'entrada' : 'salida';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${item.sku}</td><td>${item.descripcion}</td><td>${item.stock}</td>`;
+    tr.innerHTML = `<td>${item.sku}</td><td>${item.descripcion}</td><td><span class="tipo-pill ${tipoClass}">${item.tipo}</span></td><td>${item.cantidad}</td>`;
     body.appendChild(tr);
   });
 
@@ -323,6 +378,26 @@ function renderChartItems(listas) {
     options: {
       plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+function renderChartMovimientos(totalEntrada, totalSalida) {
+  const ctx = document.getElementById('chart-movimientos');
+  if (chartMovimientos) chartMovimientos.destroy();
+  chartMovimientos = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Entradas', 'Salidas'],
+      datasets: [{
+        data: [totalEntrada, totalSalida],
+        backgroundColor: ['#1ea672', '#d9445e'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Manrope' } } } },
+      cutout: '65%'
     }
   });
 }
