@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Control de Listas de Inventario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">IN</span>
+      <div>
+        <h1>Control de Listas</h1>
+        <p>Inventario por SKU</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="nueva">Nueva lista</button>
+      <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+    </nav>
+  </header>
+
+  <!-- ===================== TAB: NUEVA LISTA ===================== -->
+  <section id="tab-nueva" class="tab-panel active">
+
+    <div id="panel-sin-lista" class="card setup-card">
+      <h2>Iniciar nueva lista</h2>
+      <p class="muted">Elige quién será el responsable de esta lista antes de comenzar a ingresar SKU's.</p>
+      <div class="form-row">
+        <select id="select-responsable"></select>
+        <button id="btn-crear-lista" class="btn primary">Iniciar lista</button>
+      </div>
+    </div>
+
+    <div id="panel-con-lista" class="hidden">
+      <div class="card lista-header">
+        <div>
+          <span class="badge pendiente">Pendiente</span>
+          <h2 id="lista-responsable-actual">—</h2>
+          <p class="muted" id="lista-fecha-actual">—</p>
+        </div>
+        <div class="lista-actions">
+          <button id="btn-cerrar-lista" class="btn danger-outline">Cerrar lista</button>
+        </div>
+      </div>
+
+      <div class="card scan-card">
+        <div class="form-row">
+          <input id="input-sku" type="text" placeholder="Ingresa o escanea un SKU y presiona Enter" autocomplete="off" />
+          <button id="btn-agregar-sku" class="btn primary">Agregar</button>
+        </div>
+        <p id="scan-feedback" class="feedback"></p>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Descripción</th>
+                <th>Stock total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="items-count">0 productos</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ===================== TAB: DASHBOARD ===================== -->
+  <section id="tab-dashboard" class="tab-panel">
+
+    <div class="stats-grid">
+      <div class="card stat-card">
+        <span class="stat-label">Pendientes</span>
+        <span class="stat-value" id="stat-pendientes">0</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">Cerradas</span>
+        <span class="stat-value" id="stat-cerradas">0</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">Total listas</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">SKU's registrados</span>
+        <span class="stat-value" id="stat-items">0</span>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card chart-card">
+        <h3>Estado de listas</h3>
+        <canvas id="chart-estado"></canvas>
+      </div>
+      <div class="card chart-card">
+        <h3>Productos por lista (top 8)</h3>
+        <canvas id="chart-items"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Listas pendientes</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Responsable</th><th>Fecha creación</th><th>Productos</th><th></th></tr>
+          </thead>
+          <tbody id="pendientes-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Listas cerradas</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Responsable</th><th>Fecha creación</th><th>Fecha cierre</th><th>Productos</th><th></th></tr>
+          </thead>
+          <tbody id="cerradas-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- ===================== MODAL DETALLE ===================== -->
+<div id="modal-detalle" class="modal hidden">
+  <div class="modal-content card">
+    <button id="modal-cerrar" class="modal-close">&times;</button>
+    <h2 id="modal-titulo">Detalle de lista</h2>
+    <p class="muted" id="modal-subtitulo"></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>SKU</th><th>Descripción</th><th>Stock</th></tr></thead>
+        <tbody id="modal-items-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
