@@ -15,10 +15,10 @@
 
   <header class="topbar">
     <div class="brand">
-      <span class="brand-mark"src="https://www.casaideas.com.bo/static/media/logo.40b7cd09.png"/span>
-       <div>
-        <h1>Control Sapito 3.0 Listas</h1>
-        <p>Algarrobo - Inventario por SKU</p>
+      <span class="brand-mark">IN</span>
+      <div>
+        <h1>Control de Listas</h1>
+        <p>Inventario por SKU</p>
       </div>
     </div>
     <nav class="tabs">
@@ -35,6 +35,9 @@
       <p class="muted">Elige quién será el responsable de esta lista antes de comenzar a ingresar SKU's.</p>
       <div class="form-row">
         <select id="select-responsable"></select>
+        <input id="input-documento" type="text" placeholder="N° Documento (opcional)" />
+      </div>
+      <div class="form-row">
         <button id="btn-crear-lista" class="btn primary">Iniciar lista</button>
       </div>
     </div>
@@ -53,7 +56,15 @@
 
       <div class="card scan-card">
         <div class="form-row">
-          <input id="input-sku" type="text" placeholder="Ingresa o escanea un SKU y presiona Enter" autocomplete="off" />
+          <input id="input-sku" type="text" placeholder="Ingresa o escanea un SKU" autocomplete="off" />
+        </div>
+        <p id="preview-feedback" class="feedback"></p>
+        <div class="form-row">
+          <div class="tipo-toggle">
+            <button type="button" class="tipo-btn salida active" data-tipo="SALIDA">Salida</button>
+            <button type="button" class="tipo-btn entrada" data-tipo="ENTRADA">Entrada</button>
+          </div>
+          <input id="input-cantidad" type="number" min="1" value="1" placeholder="Cantidad" />
           <button id="btn-agregar-sku" class="btn primary">Agregar</button>
         </div>
         <p id="scan-feedback" class="feedback"></p>
@@ -66,7 +77,9 @@
               <tr>
                 <th>SKU</th>
                 <th>Descripción</th>
-                <th>Stock total</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Stock ref.</th>
                 <th></th>
               </tr>
             </thead>
@@ -112,6 +125,10 @@
         <h3>Productos por lista (top 8)</h3>
         <canvas id="chart-items"></canvas>
       </div>
+      <div class="card chart-card">
+        <h3>Entradas vs Salidas (unidades)</h3>
+        <canvas id="chart-movimientos"></canvas>
+      </div>
     </div>
 
     <div class="card">
@@ -150,7 +167,7 @@
     <p class="muted" id="modal-subtitulo"></p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>SKU</th><th>Descripción</th><th>Stock</th></tr></thead>
+        <thead><tr><th>SKU</th><th>Descripción</th><th>Tipo</th><th>Cant.</th></tr></thead>
         <tbody id="modal-items-body"></tbody>
       </table>
     </div>
