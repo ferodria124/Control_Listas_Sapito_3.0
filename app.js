@@ -2,7 +2,7 @@
    CONFIGURACIÓN
    Pega aquí la URL de tu Web App de Apps Script (termina en /exec)
    ============================================================ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbyyODUCWWq9B3OYOFbyvF_hAPNuEGbMrOS-gFR8yPgCYq5H9M86BmCbYg3YFAUG-uZAWw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzzU7QCMGpHbMdwlfOc_OqJbWuYStx3J8TnzFBcN7SOwk4O3qbl25ZFrToHTUA75O5F4Q/exec';
 
 /* ============================================================
    HELPERS DE LLAMADAS A LA API
@@ -70,6 +70,16 @@ async function init() {
     opt.value = r;
     opt.textContent = r;
     select.appendChild(opt);
+  });
+
+  const respAut = await apiGet('autorizadores');
+  const selectAut = document.getElementById('select-autorizador');
+  selectAut.innerHTML = '';
+  (respAut.autorizadores || []).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    selectAut.appendChild(opt);
   });
 
   if (listaActualId) {
@@ -171,7 +181,7 @@ async function agregarSku() {
 
   itemsActuales.push(resp.item);
   renderItems();
-  scanFeedback.textContent = '✓ Registrado en Movimientos: ' + resp.item.descripcion;
+  scanFeedback.textContent = '✓ Agregado a la lista: ' + resp.item.descripcion + ' (se registrará en Movimientos al cerrar)';
   scanFeedback.className = 'feedback ok';
 
   inputSku.value = '';
@@ -205,7 +215,7 @@ function renderItems() {
 }
 
 async function eliminarItem(itemIndex) {
-  if (!confirm('¿Quitar este producto de la lista? (el movimiento ya escrito en tu hoja Movimientos no se borra automáticamente)')) return;
+  if (!confirm('¿Quitar este producto de la lista?')) return;
   const resp = await apiPost('eliminarItem', { listaId: listaActualId, itemIndex });
   if (resp.success) {
     itemsActuales.splice(itemIndex, 1);
@@ -214,13 +224,46 @@ async function eliminarItem(itemIndex) {
 }
 
 /* ============================================================
-   CERRAR LISTA
+   CERRAR LISTA (con autorización)
    ============================================================ */
-document.getElementById('btn-cerrar-lista').addEventListener('click', async () => {
-  if (!confirm('¿Cerrar esta lista? No podrás seguir agregando productos.')) return;
+const modalCierre = document.getElementById('modal-cierre');
+const inputPin = document.getElementById('input-pin');
+const cierreFeedback = document.getElementById('cierre-feedback');
 
-  const resp = await apiPost('cerrarLista', { listaId: listaActualId });
-  if (!resp.success) { alert(resp.message || 'No se pudo cerrar la lista'); return; }
+document.getElementById('btn-abrir-cierre').addEventListener('click', () => {
+  inputPin.value = '';
+  cierreFeedback.textContent = '';
+  modalCierre.classList.remove('hidden');
+  inputPin.focus();
+});
+
+document.getElementById('modal-cierre-cerrar').addEventListener('click', () => {
+  modalCierre.classList.add('hidden');
+});
+
+inputPin.addEventListener('keydown', e => { if (e.key === 'Enter') confirmarCierre(); });
+document.getElementById('btn-confirmar-cierre').addEventListener('click', confirmarCierre);
+
+async function confirmarCierre() {
+  const autorizadoPor = document.getElementById('select-autorizador').value;
+  const pin = inputPin.value.trim();
+
+  if (!pin) { inputPin.focus(); return; }
+
+  cierreFeedback.textContent = 'Verificando...';
+  cierreFeedback.className = 'feedback';
+
+  const resp = await apiPost('cerrarLista', { listaId: listaActualId, autorizadoPor, pin });
+
+  if (!resp.success) {
+    cierreFeedback.textContent = resp.message || 'No se pudo cerrar la lista';
+    cierreFeedback.className = 'feedback error';
+    inputPin.value = '';
+    inputPin.focus();
+    return;
+  }
+
+  modalCierre.classList.add('hidden');
 
   localStorage.removeItem('listaActualId');
   listaActualId = null;
@@ -231,7 +274,7 @@ document.getElementById('btn-cerrar-lista').addEventListener('click', async () =
   document.getElementById('input-documento').value = '';
   scanFeedback.textContent = '';
   previewFeedback.textContent = '';
-});
+}
 
 /* ============================================================
    DASHBOARD
@@ -319,7 +362,8 @@ async function verDetalle(id) {
   document.getElementById('modal-titulo').textContent = 'Lista de ' + detalle.lista.responsable;
   document.getElementById('modal-subtitulo').textContent =
     formatearFecha(detalle.lista.fechaCreacion) + ' → ' + formatearFecha(detalle.lista.fechaCierre) +
-    (detalle.lista.numeroDocumento ? ' · Doc: ' + detalle.lista.numeroDocumento : '');
+    (detalle.lista.numeroDocumento ? ' · Doc: ' + detalle.lista.numeroDocumento : '') +
+    (detalle.lista.autorizadoPor ? ' · Autorizó: ' + detalle.lista.autorizadoPor : '');
 
   const body = document.getElementById('modal-items-body');
   body.innerHTML = '';
