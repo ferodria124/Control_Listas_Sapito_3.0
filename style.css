@@ -109,7 +109,7 @@ body {
 /* ---------- FORMS ---------- */
 .form-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 
-select, input[type="text"] {
+select, input[type="text"], input[type="number"], input[type="password"] {
   flex: 1;
   min-width: 220px;
   padding: 12px 14px;
@@ -264,6 +264,9 @@ tr:last-child td { border-bottom: none; }
 }
 .tipo-pill.salida { background: var(--danger-soft); color: var(--danger); }
 .tipo-pill.entrada { background: var(--ok-soft); color: var(--ok); }
+
+#input-cantidad { flex: 0 0 110px; min-width: 90px; }
+#input-pin { flex: 0 0 160px; min-width: 120px; }
 
 /* ---------- MODAL ---------- */
 .modal {
