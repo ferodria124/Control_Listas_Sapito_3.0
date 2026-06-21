@@ -54,15 +54,14 @@ body {
   object-fit: contain; }
 
 .brand-mark {
-  width: 42px; height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--brand), #6a8bff);
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800;
-  letter-spacing: .5px;
-  box-shadow: var(--shadow);
+  {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,0.20);
 }
+  
 
 .brand h1 { font-size: 18px; margin: 0; font-weight: 800; }
 .brand p { margin: 0; font-size: 12px; color: var(--muted); }
