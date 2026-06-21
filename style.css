@@ -48,7 +48,10 @@ body {
   padding: 10px 4px 24px;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { height: 40px;
+  width: auto;
+  display: block;
+  object-fit: contain; }
 
 .brand-mark {
   width: 42px; height: 42px;
