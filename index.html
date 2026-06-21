@@ -50,7 +50,7 @@
           <p class="muted" id="lista-fecha-actual">—</p>
         </div>
         <div class="lista-actions">
-          <button id="btn-cerrar-lista" class="btn danger-outline">Cerrar lista</button>
+          <button id="btn-abrir-cierre" class="btn danger-outline">Cerrar lista</button>
         </div>
       </div>
 
@@ -157,6 +157,23 @@
 
   </section>
 
+</div>
+
+<!-- ===================== MODAL CIERRE CON AUTORIZACIÓN ===================== -->
+<div id="modal-cierre" class="modal hidden">
+  <div class="modal-content card">
+    <button id="modal-cierre-cerrar" class="modal-close">&times;</button>
+    <h2>Autorizar cierre de lista</h2>
+    <p class="muted">Los productos de esta lista se registrarán en Movimientos recién al confirmar aquí.</p>
+    <div class="form-row">
+      <select id="select-autorizador"></select>
+    </div>
+    <div class="form-row">
+      <input id="input-pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off" />
+      <button id="btn-confirmar-cierre" class="btn primary">Confirmar y cerrar</button>
+    </div>
+    <p id="cierre-feedback" class="feedback"></p>
+  </div>
 </div>
 
 <!-- ===================== MODAL DETALLE ===================== -->
