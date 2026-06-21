@@ -2,7 +2,7 @@
    CONFIGURACIÓN
    Pega aquí la URL de tu Web App de Apps Script (termina en /exec)
    ============================================================ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbyKdKI-6Rj5jIFuOqpKBp8ZTiQ8Pt-zQfuDDSwlIja7LZ1N3tZ3cLEegIPtrqjeEHQvPg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbywC8fgYxDM67EU64vntP-G0wuNBQwT5ioJTsfdHe6kyisA2kFX1TXgHPEfsEps069Z_Q/exec';
 
 /* ============================================================
    HELPERS DE LLAMADAS A LA API
