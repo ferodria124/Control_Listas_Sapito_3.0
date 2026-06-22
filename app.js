@@ -133,9 +133,13 @@ const inputCantidad = document.getElementById('input-cantidad');
 const previewFeedback = document.getElementById('preview-feedback');
 const scanFeedback = document.getElementById('scan-feedback');
 
-inputSku.addEventListener('keydown', async e => {
+inputSku.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   e.preventDefault();
+  buscarPreviaSku();
+});
+
+async function buscarPreviaSku() {
   const sku = inputSku.value.trim();
   if (!sku) return;
 
@@ -154,7 +158,7 @@ inputSku.addEventListener('keydown', async e => {
   previewFeedback.className = 'feedback ok';
   inputCantidad.focus();
   inputCantidad.select();
-});
+}
 
 inputCantidad.addEventListener('keydown', e => { if (e.key === 'Enter') agregarSku(); });
 document.getElementById('btn-agregar-sku').addEventListener('click', agregarSku);
@@ -224,8 +228,113 @@ async function eliminarItem(itemIndex) {
 }
 
 /* ============================================================
-   CERRAR LISTA (con autorización)
+   SCANNER DE CÁMARA (html5-qrcode)
+   Soporta EAN-13, EAN-8, Code 128, Code 39, UPC-A, UPC-E
    ============================================================ */
+const modalScanner    = document.getElementById('modal-scanner');
+const scannerStatus   = document.getElementById('scanner-status');
+let html5QrCode       = null;
+let scannerActivo     = false;
+
+document.getElementById('btn-escanear').addEventListener('click', abrirScanner);
+document.getElementById('modal-scanner-cerrar').addEventListener('click', cerrarScanner);
+
+async function abrirScanner() {
+  modalScanner.classList.remove('hidden');
+  scannerStatus.textContent = 'Iniciando cámara...';
+  scannerStatus.className = 'feedback';
+
+  try {
+    // Pide permiso de cámara e inicia la instancia
+    html5QrCode = new Html5Qrcode('reader', {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.CODABAR
+      ],
+      verbose: false
+    });
+
+    await html5QrCode.start(
+      { facingMode: 'environment' },   // cámara trasera
+      {
+        fps: 12,
+        qrbox: { width: 280, height: 120 },   // ventana de escaneo alargada para barcodes
+        aspectRatio: 1.5
+      },
+      onScanExitoso,
+      () => {}   // errores por frame (silencioso — es normal hasta que enfoca)
+    );
+
+    scannerActivo = true;
+    scannerStatus.textContent = 'Apunta la cámara al código de barras';
+
+  } catch (err) {
+    let mensaje = 'No se pudo iniciar la cámara.';
+    if (err.toString().includes('Permission')) {
+      mensaje = 'Permiso de cámara denegado. Actívalo en la configuración del navegador.';
+    } else if (err.toString().includes('NotFound')) {
+      mensaje = 'No se encontró una cámara en este dispositivo.';
+    }
+    scannerStatus.textContent = mensaje;
+    scannerStatus.className = 'feedback error';
+  }
+}
+
+async function onScanExitoso(codigoBarras) {
+  if (!scannerActivo) return;
+
+  // Vibración de feedback en móvil (si el navegador lo soporta)
+  if (navigator.vibrate) navigator.vibrate(80);
+
+  await cerrarScanner();
+
+  // Rellena el campo SKU y dispara la búsqueda automáticamente
+  const inputSkuEl = document.getElementById('input-sku');
+  inputSkuEl.value = codigoBarras.trim();
+
+  // Mismo flujo que presionar Enter en el campo SKU
+  const previewFb = document.getElementById('preview-feedback');
+  previewFb.textContent = 'Buscando...';
+  previewFb.className = 'feedback';
+
+  const resp = await apiGet('buscarSku', { sku: codigoBarras.trim() });
+  if (!resp.success) {
+    previewFb.textContent = resp.message || 'SKU no encontrado';
+    previewFb.className = 'feedback error';
+    inputSkuEl.select();
+    return;
+  }
+
+  previewFb.textContent = '✓ ' + resp.descripcion + ' (stock ref: ' + resp.stock + ')';
+  previewFb.className = 'feedback ok';
+
+  // Mueve el foco a Cantidad para confirmar rápido
+  const cantidadEl = document.getElementById('input-cantidad');
+  cantidadEl.focus();
+  cantidadEl.select();
+}
+
+async function cerrarScanner() {
+  if (html5QrCode && scannerActivo) {
+    try {
+      await html5QrCode.stop();
+    } catch (_) { /* ya estaba detenido */ }
+    html5QrCode = null;
+    scannerActivo = false;
+  }
+  // Limpia el contenedor del reader para que no quede el video colgado
+  const reader = document.getElementById('reader');
+  reader.innerHTML = '';
+  modalScanner.classList.add('hidden');
+}
+
+
 const modalCierre = document.getElementById('modal-cierre');
 const inputPin = document.getElementById('input-pin');
 const cierreFeedback = document.getElementById('cierre-feedback');
