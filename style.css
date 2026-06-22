@@ -27,12 +27,13 @@ body {
   font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--ink);
+  overflow-x: hidden; /* evita scroll horizontal en móvil */
 }
 
 .app {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 24px 16px 60px;
 }
 
 .hidden { display: none !important; }
@@ -50,6 +51,7 @@ body {
 
 .brand { display: flex; align-items: center; gap: 12px; }
 
+/* Logo de empresa */
 .brand-mark {
   width: 42px; height: 42px;
   border-radius: 12px;
@@ -69,7 +71,7 @@ body {
 }
 
 .brand h1 { font-size: 18px; margin: 0; font-weight: 800; }
-.brand p { margin: 0; font-size: 12px; color: var(--muted); }
+.brand p  { margin: 0; font-size: 12px; color: var(--muted); }
 
 .tabs {
   display: flex;
@@ -92,10 +94,7 @@ body {
   transition: all .15s ease;
 }
 
-.tab-btn.active {
-  background: var(--brand);
-  color: #fff;
-}
+.tab-btn.active { background: var(--brand); color: #fff; }
 
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
@@ -106,7 +105,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 22px;
+  padding: 20px;
   margin-bottom: 18px;
 }
 
@@ -114,11 +113,20 @@ body {
 .card h3 { margin: 0 0 14px; font-size: 15px; }
 
 /* ---------- FORMS ---------- */
-.form-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.form-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
 
-select, input[type="text"], input[type="number"], input[type="password"] {
+select,
+input[type="text"],
+input[type="number"],
+input[type="password"] {
   flex: 1;
-  min-width: 220px;
+  min-width: 0;           /* permite que los inputs se encojan en móvil */
+  width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -128,7 +136,8 @@ select, input[type="text"], input[type="number"], input[type="password"] {
   color: var(--ink);
 }
 
-select:focus, input:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+select:focus,
+input:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
 
 .btn {
   border: none;
@@ -137,6 +146,7 @@ select:focus, input:focus { outline: 2px solid var(--brand-soft); border-color: 
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
+  white-space: nowrap;
   transition: transform .1s ease, opacity .15s ease;
 }
 .btn:active { transform: scale(.97); }
@@ -144,16 +154,19 @@ select:focus, input:focus { outline: 2px solid var(--brand-soft); border-color: 
 .btn.primary { background: var(--brand); color: #fff; }
 .btn.primary:hover { background: var(--brand-dark); }
 
-.btn.danger-outline {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
+.btn.danger-outline { background: var(--danger-soft); color: var(--danger); }
 .btn.danger-outline:hover { opacity: .85; }
 
 .btn.small { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
 
 /* ---------- LISTA HEADER ---------- */
-.lista-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.lista-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
 
 .badge {
   display: inline-block;
@@ -165,7 +178,7 @@ select:focus, input:focus { outline: 2px solid var(--brand-soft); border-color: 
   letter-spacing: .4px;
 }
 .badge.pendiente { background: var(--warn-soft); color: var(--warn); }
-.badge.cerrada { background: var(--ok-soft); color: var(--ok); }
+.badge.cerrada   { background: var(--ok-soft);   color: var(--ok);   }
 
 .feedback {
   margin-top: 10px;
@@ -173,7 +186,7 @@ select:focus, input:focus { outline: 2px solid var(--brand-soft); border-color: 
   font-weight: 600;
   min-height: 16px;
 }
-.feedback.ok { color: var(--ok); }
+.feedback.ok    { color: var(--ok);     }
 .feedback.error { color: var(--danger); }
 
 /* ---------- TABLES ---------- */
@@ -223,9 +236,9 @@ tr:last-child td { border-bottom: none; }
 }
 @media (max-width: 760px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 
-.stat-card { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
-.stat-label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
-.stat-value { font-size: 30px; font-weight: 800; }
+.stat-card   { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
+.stat-label  { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.stat-value  { font-size: 30px; font-weight: 800; }
 
 .charts-grid {
   display: grid;
@@ -239,18 +252,19 @@ tr:last-child td { border-bottom: none; }
 .chart-card { margin-bottom: 0; }
 .chart-card canvas { max-height: 220px; }
 
-/* ---------- TIPO TOGGLE (Entrada/Salida) ---------- */
+/* ---------- TIPO TOGGLE (Entrada / Salida) ---------- */
 .tipo-toggle {
   display: flex;
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .tipo-btn {
   border: none;
   background: #fbfcfe;
-  padding: 12px 18px;
+  padding: 12px 16px;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
@@ -258,8 +272,8 @@ tr:last-child td { border-bottom: none; }
   white-space: nowrap;
 }
 
-.tipo-btn.salida.active { background: var(--danger-soft); color: var(--danger); }
-.tipo-btn.entrada.active { background: var(--ok-soft); color: var(--ok); }
+.tipo-btn.salida.active  { background: var(--danger-soft); color: var(--danger); }
+.tipo-btn.entrada.active { background: var(--ok-soft);     color: var(--ok);     }
 
 .tipo-pill {
   display: inline-block;
@@ -269,25 +283,33 @@ tr:last-child td { border-bottom: none; }
   border-radius: 999px;
   text-transform: uppercase;
 }
-.tipo-pill.salida { background: var(--danger-soft); color: var(--danger); }
-.tipo-pill.entrada { background: var(--ok-soft); color: var(--ok); }
+.tipo-pill.salida  { background: var(--danger-soft); color: var(--danger); }
+.tipo-pill.entrada { background: var(--ok-soft);     color: var(--ok);     }
 
-#input-cantidad { flex: 0 0 110px; min-width: 90px; }
-#input-pin { flex: 0 0 160px; min-width: 120px; }
+#input-cantidad { flex: 0 0 100px; min-width: 80px; }
+#input-pin      { flex: 0 0 140px; min-width: 100px; }
 
-/* ---------- MODAL ---------- */
+/* En móvil el campo cantidad e inputs se expanden a pantalla completa */
+@media (max-width: 600px) {
+  #input-cantidad { flex: 1; }
+  #input-pin      { flex: 1; }
+  .tipo-toggle    { width: 100%; }
+  .tipo-btn       { flex: 1; text-align: center; }
+}
+
+/* ---------- MODAL BASE ---------- */
 .modal {
   position: fixed; inset: 0;
   background: rgba(20,24,40,.45);
   display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+  padding: 16px;
   z-index: 50;
 }
 
 .modal-content {
   max-width: 560px;
   width: 100%;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow-y: auto;
   position: relative;
 }
@@ -303,11 +325,8 @@ tr:last-child td { border-bottom: none; }
 }
 
 /* ---------- SCANNER ---------- */
-.scanner-modal {
-  max-width: 420px;
-}
+.scanner-modal { max-width: 420px; }
 
-/* Contenedor que genera html5-qrcode — necesita ancho definido */
 #reader {
   width: 100%;
   border-radius: 10px;
@@ -316,43 +335,18 @@ tr:last-child td { border-bottom: none; }
   background: #000;
 }
 
-/* Oculta el botón de subir imagen que html5-qrcode agrega por defecto */
+#reader video {
+  width: 100% !important;
+  border-radius: 10px;
+}
+
+/* Oculta controles extra que agrega html5-qrcode */
 #reader__dashboard_section_swaplink,
 #reader__dashboard_section_fileupload,
 #html5-qrcode-button-camera-permission,
 #html5-qrcode-button-camera-start,
-#html5-qrcode-button-camera-stop {
-  display: none !important;
-}
+#html5-qrcode-button-camera-stop { display: none !important; }
 
-/* Mira de enfoque que la librería dibuja sobre el video */
-#reader__scan_region {
-  border-radius: 8px;
-}
+#scanner-status { text-align: center; }
 
-/* Botón escanear con ícono de cámara más visible en móvil */
-#btn-escanear {
-  white-space: nowrap;
-  font-size: 15px;
-}
-
-/* ---------- SCANNER DE CÁMARA ---------- */
-.scanner-modal { max-width: 420px; }
-
-#reader {
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-top: 14px;
-  background: #000;
-}
-
-#reader video {
-  width: 100% !important;
-  border-radius: 12px;
-}
-
-#scanner-status {
-  text-align: center;
-  margin-top: 12px;
-}
+#btn-escanear { flex-shrink: 0; }
