@@ -294,3 +294,58 @@ tr:last-child td { border-bottom: none; }
   cursor: pointer;
   color: var(--muted);
 }
+
+/* ---------- SCANNER ---------- */
+.scanner-modal {
+  max-width: 420px;
+}
+
+/* Contenedor que genera html5-qrcode — necesita ancho definido */
+#reader {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 14px 0 10px;
+  background: #000;
+}
+
+/* Oculta el botón de subir imagen que html5-qrcode agrega por defecto */
+#reader__dashboard_section_swaplink,
+#reader__dashboard_section_fileupload,
+#html5-qrcode-button-camera-permission,
+#html5-qrcode-button-camera-start,
+#html5-qrcode-button-camera-stop {
+  display: none !important;
+}
+
+/* Mira de enfoque que la librería dibuja sobre el video */
+#reader__scan_region {
+  border-radius: 8px;
+}
+
+/* Botón escanear con ícono de cámara más visible en móvil */
+#btn-escanear {
+  white-space: nowrap;
+  font-size: 15px;
+}
+
+/* ---------- SCANNER DE CÁMARA ---------- */
+.scanner-modal { max-width: 420px; }
+
+#reader {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 14px;
+  background: #000;
+}
+
+#reader video {
+  width: 100% !important;
+  border-radius: 12px;
+}
+
+#scanner-status {
+  text-align: center;
+  margin-top: 12px;
+}
