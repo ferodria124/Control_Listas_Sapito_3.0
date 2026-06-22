@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -57,6 +58,7 @@
       <div class="card scan-card">
         <div class="form-row">
           <input id="input-sku" type="text" placeholder="Ingresa o escanea un SKU" autocomplete="off" />
+          <button id="btn-escanear" class="btn primary" type="button">📷 Escanear</button>
         </div>
         <p id="preview-feedback" class="feedback"></p>
         <div class="form-row">
@@ -157,6 +159,16 @@
 
   </section>
 
+</div>
+
+<!-- ===================== MODAL SCANNER DE CÁMARA ===================== -->
+<div id="modal-scanner" class="modal hidden">
+  <div class="modal-content card scanner-modal">
+    <button id="modal-scanner-cerrar" class="modal-close">&times;</button>
+    <h2>Escanear código de barras</h2>
+    <div id="reader"></div>
+    <p class="feedback" id="scanner-status">Apunta la cámara al código de barras</p>
+  </div>
 </div>
 
 <!-- ===================== MODAL CIERRE CON AUTORIZACIÓN ===================== -->
