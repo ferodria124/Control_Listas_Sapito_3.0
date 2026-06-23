@@ -231,75 +231,172 @@ async function eliminarItem(itemIndex) {
 /* ============================================================
    SCANNER DE CÁMARA (html5-qrcode)
    Soporta EAN-13, EAN-8, Code 128, Code 39, UPC-A, UPC-E
+   Permite elegir entre todas las cámaras disponibles del
+   dispositivo, útil cuando la cámara trasera principal no
+   detecta bien los códigos de barras.
    ============================================================ */
-const modalScanner    = document.getElementById('modal-scanner');
-const scannerStatus   = document.getElementById('scanner-status');
-let html5QrCode       = null;
-let scannerActivo     = false;
+const modalScanner       = document.getElementById('modal-scanner');
+const scannerStatus      = document.getElementById('scanner-status');
+const panelSelectorCam   = document.getElementById('panel-selector-camara');
+const listaCamaras       = document.getElementById('lista-camaras');
+const btnCambiarCamara   = document.getElementById('btn-cambiar-camara');
+
+let html5QrCode          = null;
+let scannerActivo        = false;
+let camarasDisponibles   = [];   // [{ id, label }]
+let camaraActualId       = null;
+
+const FORMATOS_BARCODE = [
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.CODABAR
+];
 
 document.getElementById('btn-escanear').addEventListener('click', abrirScanner);
 document.getElementById('modal-scanner-cerrar').addEventListener('click', cerrarScanner);
+btnCambiarCamara.addEventListener('click', mostrarSelectorCamara);
 
+/* ------ Abrir scanner ------ */
 async function abrirScanner() {
   modalScanner.classList.remove('hidden');
-  scannerStatus.textContent = 'Iniciando cámara...';
+  panelSelectorCam.classList.add('hidden');
+  btnCambiarCamara.classList.add('hidden');
+  scannerStatus.textContent = 'Buscando cámaras disponibles...';
   scannerStatus.className = 'feedback';
 
   try {
-    // Pide permiso de cámara e inicia la instancia
+    camarasDisponibles = await Html5Qrcode.getCameras();
+  } catch (err) {
+    scannerStatus.textContent = 'Permiso de cámara denegado. Actívalo en la configuración del navegador.';
+    scannerStatus.className = 'feedback error';
+    return;
+  }
+
+  if (!camarasDisponibles || camarasDisponibles.length === 0) {
+    scannerStatus.textContent = 'No se encontró ninguna cámara en este dispositivo.';
+    scannerStatus.className = 'feedback error';
+    return;
+  }
+
+  if (camarasDisponibles.length === 1) {
+    // Solo una cámara → iniciar directamente
+    await iniciarCamara(camarasDisponibles[0].id);
+  } else {
+    // Varias cámaras → mostrar selector
+    mostrarSelectorCamara();
+  }
+}
+
+/* ------ Mostrar selector de cámaras ------ */
+function mostrarSelectorCamara() {
+  // Si el scanner estaba activo, detenerlo para poder cambiar
+  if (scannerActivo) detenerCamaraActual();
+
+  listaCamaras.innerHTML = '';
+  camarasDisponibles.forEach(cam => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-camara' + (cam.id === camaraActualId ? ' activa' : '');
+
+    // Etiqueta legible: si el label está vacío o es genérico, poner nombre amigable
+    const label = cam.label || '';
+    let nombre = label;
+    if (!nombre || nombre.toLowerCase().includes('facing back') || nombre.toLowerCase().includes('environment')) {
+      nombre = '📷 Cámara trasera';
+    } else if (nombre.toLowerCase().includes('facing front') || nombre.toLowerCase().includes('user')) {
+      nombre = '🤳 Cámara frontal';
+    } else {
+      // Acortar labels muy largos (algunos dispositivos ponen el ID completo)
+      nombre = '📷 ' + (label.length > 40 ? label.substring(0, 40) + '…' : label);
+    }
+
+    btn.textContent = nombre + (cam.id === camaraActualId ? '  ✓ en uso' : '');
+    btn.type = 'button';
+    btn.addEventListener('click', () => iniciarCamara(cam.id));
+    listaCamaras.appendChild(btn);
+  });
+
+  panelSelectorCam.classList.remove('hidden');
+  document.getElementById('reader').innerHTML = '';
+  scannerStatus.textContent = 'Elige la cámara que quieres usar:';
+  scannerStatus.className = 'feedback';
+  btnCambiarCamara.classList.add('hidden');
+}
+
+/* ------ Iniciar una cámara específica por ID ------ */
+async function iniciarCamara(camaraId) {
+  panelSelectorCam.classList.add('hidden');
+  scannerStatus.textContent = 'Iniciando cámara...';
+  scannerStatus.className = 'feedback';
+
+  // Asegurarse de que no haya instancia previa activa
+  await detenerCamaraActual();
+
+  try {
     html5QrCode = new Html5Qrcode('reader', {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.ITF,
-        Html5QrcodeSupportedFormats.CODABAR
-      ],
+      formatsToSupport: FORMATOS_BARCODE,
       verbose: false
     });
 
     await html5QrCode.start(
-      { facingMode: 'environment' },   // cámara trasera
+      camaraId,
       {
         fps: 12,
-        qrbox: { width: 280, height: 120 },   // ventana de escaneo alargada para barcodes
+        qrbox: { width: 280, height: 120 },
         aspectRatio: 1.5
       },
       onScanExitoso,
-      () => {}   // errores por frame (silencioso — es normal hasta que enfoca)
+      () => {}   // errores por frame silenciosos (normal mientras enfoca)
     );
 
     scannerActivo = true;
+    camaraActualId = camaraId;
     scannerStatus.textContent = 'Apunta la cámara al código de barras';
 
+    // Mostrar botón "Cambiar cámara" solo si hay más de una disponible
+    if (camarasDisponibles.length > 1) {
+      btnCambiarCamara.classList.remove('hidden');
+    }
+
   } catch (err) {
-    let mensaje = 'No se pudo iniciar la cámara.';
+    let mensaje = 'No se pudo iniciar esta cámara.';
     if (err.toString().includes('Permission')) {
       mensaje = 'Permiso de cámara denegado. Actívalo en la configuración del navegador.';
-    } else if (err.toString().includes('NotFound')) {
-      mensaje = 'No se encontró una cámara en este dispositivo.';
     }
     scannerStatus.textContent = mensaje;
     scannerStatus.className = 'feedback error';
+
+    // Si falla, volver al selector para que pruebe otra
+    if (camarasDisponibles.length > 1) {
+      setTimeout(mostrarSelectorCamara, 1500);
+    }
   }
 }
 
+/* ------ Detener la cámara activa sin cerrar el modal ------ */
+async function detenerCamaraActual() {
+  if (html5QrCode && scannerActivo) {
+    try { await html5QrCode.stop(); } catch (_) {}
+    html5QrCode = null;
+    scannerActivo = false;
+  }
+  document.getElementById('reader').innerHTML = '';
+}
+
+/* ------ Scan exitoso ------ */
 async function onScanExitoso(codigoBarras) {
   if (!scannerActivo) return;
-
-  // Vibración de feedback en móvil (si el navegador lo soporta)
   if (navigator.vibrate) navigator.vibrate(80);
 
   await cerrarScanner();
 
-  // Rellena el campo SKU y dispara la búsqueda automáticamente
   const inputSkuEl = document.getElementById('input-sku');
   inputSkuEl.value = codigoBarras.trim();
 
-  // Mismo flujo que presionar Enter en el campo SKU
   const previewFb = document.getElementById('preview-feedback');
   previewFb.textContent = 'Buscando...';
   previewFb.className = 'feedback';
@@ -315,23 +412,17 @@ async function onScanExitoso(codigoBarras) {
   previewFb.textContent = '✓ ' + resp.descripcion + ' (stock ref: ' + resp.stock + ')';
   previewFb.className = 'feedback ok';
 
-  // Mueve el foco a Cantidad para confirmar rápido
   const cantidadEl = document.getElementById('input-cantidad');
   cantidadEl.focus();
   cantidadEl.select();
 }
 
+/* ------ Cerrar scanner completamente ------ */
 async function cerrarScanner() {
-  if (html5QrCode && scannerActivo) {
-    try {
-      await html5QrCode.stop();
-    } catch (_) { /* ya estaba detenido */ }
-    html5QrCode = null;
-    scannerActivo = false;
-  }
-  // Limpia el contenedor del reader para que no quede el video colgado
-  const reader = document.getElementById('reader');
-  reader.innerHTML = '';
+  await detenerCamaraActual();
+  panelSelectorCam.classList.add('hidden');
+  btnCambiarCamara.classList.add('hidden');
+  scannerStatus.textContent = '';
   modalScanner.classList.add('hidden');
 }
 
@@ -559,12 +650,6 @@ function renderChartMovimientos(totalEntrada, totalSalida) {
 /* ============================================================
    UTILS
    ============================================================ */
-function formatearFecha(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) +
-    ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-}
 function formatearFecha(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
