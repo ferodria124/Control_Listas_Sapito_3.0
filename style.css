@@ -359,4 +359,9 @@ tr:last-child td { border-bottom: none; }
 
 #scanner-status { text-align: center; }
 
-#btn-escanear { flex-shrink: 0; }
+#btn-escanear {
+  flex-shrink: 0;
+  flex: 0 0 48px;
+  padding: 12px;
+  font-size: 18px;
+}
