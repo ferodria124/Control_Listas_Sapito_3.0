@@ -138,6 +138,7 @@ inputSku.addEventListener('keydown', e => {
   e.preventDefault();
   buscarPreviaSku();
 });
+document.getElementById('btn-buscar-sku').addEventListener('click', buscarPreviaSku);
 
 async function buscarPreviaSku() {
   const sku = inputSku.value.trim();
@@ -558,6 +559,12 @@ function renderChartMovimientos(totalEntrada, totalSalida) {
 /* ============================================================
    UTILS
    ============================================================ */
+function formatearFecha(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+}
 function formatearFecha(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
