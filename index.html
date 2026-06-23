@@ -169,8 +169,21 @@
   <div class="modal-content card scanner-modal">
     <button id="modal-scanner-cerrar" class="modal-close">&times;</button>
     <h2>Escanear código de barras</h2>
+
+    <!-- Panel de selección de cámara (visible solo si hay más de una) -->
+    <div id="panel-selector-camara" class="hidden">
+      <p class="muted">Elige qué cámara usar:</p>
+      <div id="lista-camaras" class="camara-lista"></div>
+    </div>
+
+    <!-- Visor de la cámara activa -->
     <div id="reader"></div>
-    <p class="feedback" id="scanner-status">Apunta la cámara al código de barras</p>
+    <p class="feedback" id="scanner-status"></p>
+
+    <!-- Botón para cambiar cámara mientras escanea -->
+    <button id="btn-cambiar-camara" class="btn small hidden" type="button" style="margin-top:10px;width:100%;">
+      🔄 Cambiar cámara
+    </button>
   </div>
 </div>
 
