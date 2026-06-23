@@ -365,3 +365,33 @@ tr:last-child td { border-bottom: none; }
   padding: 12px;
   font-size: 18px;
 }
+
+/* ---------- SELECTOR DE CÁMARA ---------- */
+#panel-selector-camara {
+  margin: 12px 0 4px;
+}
+
+.camara-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-camara {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fbfcfe;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: all .15s ease;
+}
+
+.btn-camara:hover  { border-color: var(--brand); background: var(--brand-soft); }
+.btn-camara.activa { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); font-weight: 700; }
